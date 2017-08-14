@@ -30,7 +30,7 @@ class SnowflakeIdGeneratorTest extends TestCase
 
     function testIdSort()
     {
-        $gn = new SnowflakeIdGenerator();
+        $gn = \Yii::$app->get('idGenerator');
         $i = 10;
         $ids = [];
         while ($i >0){
@@ -38,7 +38,10 @@ class SnowflakeIdGeneratorTest extends TestCase
             $i--;
         }
         $sids = $ids;
-        asort($sids);
-        $this->assertEquals($ids,$sids);
+        sort($sids);
+        foreach ($sids as $key=>$value){
+            $this->assertEquals($ids[$key],$value);
+            $this->assertEquals(strlen($value),18);
+        }
     }
 }

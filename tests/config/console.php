@@ -30,7 +30,7 @@ return [
         'db' => $db,
         'idGenerator'=>[
             'class'=>'yak\framework\model\SnowflakeIdGenerator',
-            'workdId'=>'1023',
+            'workerId'=>'1',
         ],
     ],
     'modules'=>[
