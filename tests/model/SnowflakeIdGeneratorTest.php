@@ -25,12 +25,13 @@ class SnowflakeIdGeneratorTest extends TestCase
         $id1 = $idg->nextId();
         $id2 = $idg->nextId();
         $this->assertNotEquals($id1,$id2);
-        $this->assertGreaterThan($id2,$id1);
+        $this->assertGreaterThan($id1,$id2);
     }
 
     function testIdSort()
     {
         $gn = \Yii::$app->get('idGenerator');
+//        $gn->useLock = false;
         $i = 10;
         $ids = [];
         while ($i >0){

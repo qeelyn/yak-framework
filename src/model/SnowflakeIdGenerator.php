@@ -4,9 +4,22 @@ namespace yak\framework\model;
 
 
 use Yii;
-use yii\base\Object;
+use yii\base\Component;
+use yii\di\Instance;
+use yii\mutex\Mutex;
 
 /**
+ * snowflake ID生成算法,支持Yii mutex方式生成
+ *
+ * 如果ID生成机制出现严重的并发冲突时,可采用mutex方式配合.
+ * @see [[/yii/base/Mutex]]
+ *
+ * 'component'=>[
+ *      'class'=>'yak\framework\model\SnowflakeIdGenerator',
+ *      'mutex'=>[
+ *          'class' => 'yii\mutex\FileMutex'
+ *      ],
+ * ]
  *
  * 1-41共40bit存放时间，毫秒数 2^40/(365*24*3600*1000) = 39.4年，大概可以用39.4年
  * 42-44共3bit存放数据中心，机房标识，可以拥有2^3=8个机房
@@ -21,8 +34,14 @@ use yii\base\Object;
  *
  * @see https://github.com/twitter/snowflake
  */
-class SnowflakeIdGenerator extends Object implements IdGeneratorInterface  
+class SnowflakeIdGenerator extends Component implements IdGeneratorInterface
 {
+    /**
+     * @var Mutex
+     */
+    public $mutex;
+
+    const MUTEX_NAME = 'idGenerate';
     /*
      * 64位里面各个位置的使用情况，剩下未做说明的就是时间毫秒数的存放了，64-3-8-3-9-1=40位
      */
@@ -47,6 +66,14 @@ class SnowflakeIdGenerator extends Object implements IdGeneratorInterface
     private $_sequence = 0;  //毫秒时间内总共生成了多少个
     private $_sequenceMask; //每毫秒最多可以生成多少个id 511 = -1 ^ (-1 << SEQUENCE_BITS)
     private $_lastTimestamp = -1;
+
+    public function init()
+    {
+        parent::init();
+        if($this->mutex != null){
+            $this->mutex = Instance::ensure($this->mutex,Mutex::className());
+        }
+    }
 
     /**
      * @param $dataCenterId [机房中心id]
@@ -184,12 +211,33 @@ class SnowflakeIdGenerator extends Object implements IdGeneratorInterface
         }
         return $timestamp;
     }
+
     /**
      * 获取id
      * @return int
      * @throws \Exception
      */
     public function nextId()
+    {
+        try{
+            if($this->mutex && !$this->mutex->acquire(self::MUTEX_NAME,5)){
+                //启用锁机制时,超时
+                throw new \RuntimeException('id generate request lock time out!');
+            }
+            return $this->nextIdInternal();
+        }finally{
+            if ($this->mutex && $this->mutex->autoRelease) {
+                $this->mutex->release(self::MUTEX_NAME);
+            }
+        }
+    }
+
+    /**
+     * 获取id
+     * @return int
+     * @throws \Exception
+     */
+    public function nextIdInternal()
     {
         $timestamp = $this->timeGen();
         //时间错误,系统时钟出问题了

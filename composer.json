@@ -23,5 +23,8 @@
     "post-create-project-cmd": [
       "yii\\composer\\Installer::postCreateProject"
     ]
+  },
+  "suggest":{
+    "malkusch/lock":"if use idGenerate feature and the yii mutex is not satisfied,this lib is helpfull"
   }
 }

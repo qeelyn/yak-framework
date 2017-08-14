@@ -31,6 +31,9 @@ return [
         'idGenerator'=>[
             'class'=>'yak\framework\model\SnowflakeIdGenerator',
             'workerId'=>'1',
+            'mutex'=>[
+                'class' => 'yii\mutex\FileMutex'
+            ],
         ],
     ],
     'modules'=>[
