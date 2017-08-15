@@ -28,6 +28,14 @@ class SnowflakeIdGeneratorTest extends TestCase
         $this->assertGreaterThan($id1,$id2);
     }
 
+    function testFloat()
+    {
+        $a = 214774050445070336;
+        $b = floatval($a);
+        echo $b;
+        echo strval($b);
+    }
+
     function testIdSort()
     {
         $gn = \Yii::$app->get('idGenerator');

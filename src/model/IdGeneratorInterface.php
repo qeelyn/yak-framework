@@ -11,6 +11,7 @@ namespace yak\framework\model;
 
 /**
  * ID生成接口,该接口主要提供ActiveRecord主键生成能力.
+ *
  * 相当的配置方式:
  * ```php
  *  'idGenerator'=>[
@@ -23,8 +24,8 @@ namespace yak\framework\model;
 interface IdGeneratorInterface
 {
     /**
-     * 获取ID值
-     * @return string|int
+     * 获取ID值,由于32/64架构的差异,建议接口返回结果为string,以获得最大的兼容性
+     * @return string
      */
     public function nextId();
 }

@@ -66,7 +66,8 @@ trait IdGenerateTrait
     }
 
     /**
-     * @return string | int
+     * 由于32/64架构的差异,建议接口返回结果为string,以获得最大的兼容性
+     * @return string
      */
     private function nextId()
     {

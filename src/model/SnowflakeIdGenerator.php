@@ -14,8 +14,12 @@ use yii\mutex\Mutex;
  * 如果ID生成机制出现严重的并发冲突时,可采用mutex方式配合.
  * @see [[/yii/base/Mutex]]
  *
+ * > 注: 在32 PHP 环境下,采用GMP库来实现精度运算,需要安装该库.
+ *
+ * 配置如下:
  * 'component'=>[
  *      'class'=>'yak\framework\model\SnowflakeIdGenerator',
+ *      ''
  *      'mutex'=>[
  *          'class' => 'yii\mutex\FileMutex'
  *      ],
@@ -66,7 +70,7 @@ class SnowflakeIdGenerator extends Component implements IdGeneratorInterface
         if($this->mutex != null){
             $this->mutex = Instance::ensure($this->mutex,Mutex::className());
         }
-        if(PHP_INT_MAX == 2147483647){
+        if(PHP_INT_SIZE == 4){
             //32位
             $this->_isCompatibility32 = true;
         }
@@ -160,7 +164,7 @@ class SnowflakeIdGenerator extends Component implements IdGeneratorInterface
 
     /**
      * 获取id
-     * @return int
+     * @return string
      * @throws \Exception
      */
     public function nextId()
@@ -180,7 +184,7 @@ class SnowflakeIdGenerator extends Component implements IdGeneratorInterface
 
     /**
      * 获取id
-     * @return int
+     * @return string
      * @throws \Exception
      */
     public function nextIdInternal()
@@ -206,24 +210,27 @@ class SnowflakeIdGenerator extends Component implements IdGeneratorInterface
         //更新最后生成的时间
         $this->_lastTimestamp = $timestamp;
         //ID偏移组合生成最终的ID，并返回ID
-        return $this->getTimestampPlaceHolder() |
-            ($this->workerId << $this->getWorkerIdShift()) |
-            $this->_sequence;
+        return $this->getCompatibilityResult();
     }
 
     /**
-     * 32位PHP时,位移运算在规则的41位时间戳会出现问题
+     * 位移运算在规则的32位INT下运算会出现非预期
+     * @return string
      */
-    private function getTimestampPlaceHolder()
+    private function getCompatibilityResult()
     {
         $time = $this->_lastTimestamp - $this->epoch;
         if($this->_isCompatibility32){
-            $movebit = pow(2, $this->getTimestampLeftShift());
-            $result = bcmul($time, $movebit);
-            return $result;
+            $timestamp = gmp_mul((string)$time, gmp_pow(2, 22));
+            $machine = gmp_mul((string)$this->workerId, gmp_pow(2, 12));
+            $sequence = gmp_init((string)$this->_sequence, 10);
+            $value = gmp_or(gmp_or($timestamp, $machine), $sequence);
+            return gmp_strval($value, 10);
         }else{
-            $result = $time << $this->getTimestampLeftShift();
-            return $result;
+            $value = ($time << $this->getTimestampLeftShift())|
+                ($this->workerId << $this->getWorkerIdShift()) |
+                $this->_sequence;
+            return strval($value);
         }
     }
 }
