@@ -21,7 +21,7 @@ class SnowflakeIdGeneratorTest extends TestCase
 
     function testNextId()
     {
-        $idg = \Yii::$app->get('idGenerator');
+        $idg = new SnowflakeIdGenerator([]);
         $id1 = $idg->nextId();
         $id2 = $idg->nextId();
         $this->assertNotEquals($id1,$id2);
