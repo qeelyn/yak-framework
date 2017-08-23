@@ -26,9 +26,10 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
 {
     /**
      * ContextUser constructor.
+     * @param $config
      * @param $data
      */
-    public function __construct($data)
+    public function __construct($config = [],$data = [])
     {
         $this->attributes = $data;
     }
