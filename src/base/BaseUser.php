@@ -62,14 +62,6 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     }
 
     /**
-     * 缓存用户上下文数据
-     */
-    public function cacheIdentity($key)
-    {
-        Yii::$app->cache->set($key, $this->attributes);
-    }
-
-    /**
      * 获取当前组织id;
      * @return mixed
      */
