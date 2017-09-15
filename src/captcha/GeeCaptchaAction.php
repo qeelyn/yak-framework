@@ -55,7 +55,11 @@ class GeeCaptchaAction extends Action
      */
     public function validate($value)
     {
-        $post = \Yii::$app->request->post();
+        if(Yii::$app->request->isGet){
+            $rq = Yii::$app->request->get();
+        } else {
+            $rq = \Yii::$app->request->post();
+        }
         $userId = Yii::$app->user->getId();
         $params = [
             'user_id'=>$userId? md5($userId):'',
@@ -64,11 +68,11 @@ class GeeCaptchaAction extends Action
         ];
         if(Yii::$app->session->get('gt_server') == 1){
             //服务器正常
-            $result = $this->successValidate($post['geetest_challenge'],$post['geetest_validate'],$post['geetest_seccode'],$params);
+            $result = $this->successValidate($rq['geetest_challenge'],$rq['geetest_validate'],$rq['geetest_seccode'],$params);
 
         }else{
             //服务器宕机,走failback模式
-            $result = $this->failValidate($post['geetest_challenge'], $post['geetest_validate'], $post['geetest_seccode']);
+            $result = $this->failValidate($rq['geetest_challenge'], $rq['geetest_validate'], $rq['geetest_seccode']);
         }
         return $result == 1;
     }
