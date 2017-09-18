@@ -23,7 +23,7 @@ class GeeCaptchaAction extends Action
     const GT_SDK_VERSION = 'php_3.0.0';
 
     public static $connectTimeout = 1;
-    public static $socketTimeout  = 1;
+    public static $socketTimeout = 1;
     /**
      * @var string 公钥,在geetest上的id
      */
@@ -32,21 +32,51 @@ class GeeCaptchaAction extends Action
      * @var string 私钥,在geetest上的key
      */
     public $appKey;
+    /**
+     * @var callable parse the request params for geetest,
+     * it must return array contain keys 'client_type','geetest_challenge','geetest_validate','geetest_seccode'
+     * ```php
+     * function()
+     * {
+     *      return
+     * }
+     * ```
+     */
+    public $parseRequestParams;
 
     public function run()
     {
         $userId = Yii::$app->user->getId();
-        $get = \Yii::$app->request->get();
+        $rq = $this->parseRequest();
         $params = [
-            'user_id'=>$userId? md5($userId):'',
-            'client_type'=>$get['client_type'],
-            'ip_address'=>Yii::$app->request->getUserIP(),
+            'user_id' => $userId ? md5($userId) : '',
+            'client_type' => $rq['client_type'],
+            'ip_address' => Yii::$app->request->getUserIP(),
         ];
         $result = $this->preProcess($params);
-        if($result['success']){
+        if ($result['success']) {
+            //TODO API Server must use cache
             Yii::$app->session->set('gt_server', $result['success']);
         }
         return $result;
+    }
+
+    private function parseRequest()
+    {
+        if ($this->parseRequestParams) {
+            return call_user_func($this->parseRequestParams);
+        }
+        if (Yii::$app->request->isGet) {
+            $rq = Yii::$app->request->get();
+        } else {
+            $rq = \Yii::$app->request->post();
+        }
+        return [
+            'client_type' => $rq['client_type'] ?? '',
+            'geetest_challenge' => $rq['geetest_challenge'] ?? '',
+            'geetest_validate' => $rq['geetest_validate'] ?? '',
+            'geetest_seccode' => $rq['geetest_seccode'] ?? '',
+        ];
     }
 
     /**
@@ -55,22 +85,18 @@ class GeeCaptchaAction extends Action
      */
     public function validate($value)
     {
-        if(Yii::$app->request->isGet){
-            $rq = Yii::$app->request->get();
-        } else {
-            $rq = \Yii::$app->request->post();
-        }
+        $rq = $this->parseRequest();
         $userId = Yii::$app->user->getId();
         $params = [
-            'user_id'=>$userId? md5($userId):'',
-            'client_type'=>$value,
-            'ip_address'=>Yii::$app->request->getUserIP(),
+            'user_id' => $userId ? md5($userId) : '',
+            'client_type' => $rq['client_type'],
+            'ip_address' => Yii::$app->request->getUserIP(),
         ];
-        if(Yii::$app->session->get('gt_server') == 1){
+        if (Yii::$app->session->get('gt_server') == 1) {
             //服务器正常
-            $result = $this->successValidate($rq['geetest_challenge'],$rq['geetest_validate'],$rq['geetest_seccode'],$params);
+            $result = $this->successValidate($rq['geetest_challenge'], $rq['geetest_validate'], $rq['geetest_seccode'], $params);
 
-        }else{
+        } else {
             //服务器宕机,走failback模式
             $result = $this->failValidate($rq['geetest_challenge'], $rq['geetest_validate'], $rq['geetest_seccode']);
         }
@@ -84,13 +110,13 @@ class GeeCaptchaAction extends Action
      * @param int $newCaptcha
      * @return array 包含了状态信息了.success = 1|0
      */
-    private function preProcess($param,$newCaptcha = 1)
+    private function preProcess($param, $newCaptcha = 1)
     {
         $data = [
-            'gt'=>$this->appId,
-            'new_captcha'=>$newCaptcha
+            'gt' => $this->appId,
+            'new_captcha' => $newCaptcha
         ];
-        $data = array_merge($data,$param);
+        $data = array_merge($data, $param);
         $query = http_build_query($data);
         $url = "http://api.geetest.com/register.php?" . $query;
         $challenge = $this->send_request($url);
@@ -104,13 +130,14 @@ class GeeCaptchaAction extends Action
     /**
      * @param $challenge
      */
-    private function successProcess($challenge) {
-        $challenge      = md5($challenge . $this->appKey);
-        $result         = array(
-            'success'   => 1,
-            'gt'        => $this->appId,
+    private function successProcess($challenge)
+    {
+        $challenge = md5($challenge . $this->appKey);
+        $result = array(
+            'success' => 1,
+            'gt' => $this->appId,
             'challenge' => $challenge,
-            'new_captcha'=>1
+            'new_captcha' => 1
         );
         return $result;
     }
@@ -118,15 +145,16 @@ class GeeCaptchaAction extends Action
     /**
      *
      */
-    private function failbackProcess() {
-        $rnd1           = md5(rand(0, 100));
-        $rnd2           = md5(rand(0, 100));
-        $challenge      = $rnd1 . substr($rnd2, 0, 2);
-        $result         = array(
-            'success'   => 0,
-            'gt'        => $this->appId,
+    private function failbackProcess()
+    {
+        $rnd1 = md5(rand(0, 100));
+        $rnd2 = md5(rand(0, 100));
+        $challenge = $rnd1 . substr($rnd2, 0, 2);
+        $result = array(
+            'success' => 0,
+            'gt' => $this->appId,
             'challenge' => $challenge,
-            'new_captcha'=>1
+            'new_captcha' => 1
         );
         return $result;
     }
@@ -140,23 +168,24 @@ class GeeCaptchaAction extends Action
      * @param array $param
      * @return int
      */
-    public function successValidate($challenge, $validate, $seccode, $param, $json_format=1) {
+    public function successValidate($challenge, $validate, $seccode, $param, $json_format = 1)
+    {
         if (!$this->checkValidate($challenge, $validate)) {
             return 0;
         }
         $query = array(
             "seccode" => $seccode,
-            "timestamp"=>time(),
-            "challenge"=>$challenge,
-            "captchaid"=>$this->appId,
-            "json_format"=>$json_format,
-            "sdk"     => self::GT_SDK_VERSION
+            "timestamp" => time(),
+            "challenge" => $challenge,
+            "captchaid" => $this->appId,
+            "json_format" => $json_format,
+            "sdk" => self::GT_SDK_VERSION
         );
-        $query = array_merge($query,$param);
-        $url          = "http://api.geetest.com/validate.php";
+        $query = array_merge($query, $param);
+        $url = "http://api.geetest.com/validate.php";
         $codevalidate = $this->post_request($url, $query);
-        $obj = json_decode($codevalidate,true);
-        if ($obj === false){
+        $obj = json_decode($codevalidate, true);
+        if ($obj === false) {
             return 0;
         }
         if ($obj['seccode'] == md5($seccode)) {
@@ -174,10 +203,11 @@ class GeeCaptchaAction extends Action
      * @param $seccode
      * @return int
      */
-    public function failValidate($challenge, $validate, $seccode) {
-        if(md5($challenge) == $validate){
+    public function failValidate($challenge, $validate, $seccode)
+    {
+        if (md5($challenge) == $validate) {
             return 1;
-        }else{
+        } else {
             return 0;
         }
     }
@@ -187,7 +217,8 @@ class GeeCaptchaAction extends Action
      * @param $validate
      * @return bool
      */
-    private function checkValidate($challenge, $validate) {
+    private function checkValidate($challenge, $validate)
+    {
         if (strlen($validate) != 32) {
             return false;
         }
@@ -204,7 +235,8 @@ class GeeCaptchaAction extends Action
      * @param $url
      * @return mixed|string
      */
-    private function send_request($url) {
+    private function send_request($url)
+    {
 
         if (function_exists('curl_exec')) {
             $ch = curl_init();
@@ -215,23 +247,23 @@ class GeeCaptchaAction extends Action
             $curl_errno = curl_errno($ch);
             $data = curl_exec($ch);
             curl_close($ch);
-            if ($curl_errno >0) {
+            if ($curl_errno > 0) {
                 return 0;
-            }else{
+            } else {
                 return $data;
             }
         } else {
-            $opts    = array(
+            $opts = array(
                 'http' => array(
-                    'method'  => "GET",
+                    'method' => "GET",
                     'timeout' => self::$connectTimeout + self::$socketTimeout,
                 )
             );
             $context = stream_context_create($opts);
-            $data    = @file_get_contents($url, false, $context);
-            if($data){
+            $data = @file_get_contents($url, false, $context);
+            if ($data) {
                 return $data;
-            }else{
+            } else {
                 return 0;
             }
         }
@@ -243,7 +275,8 @@ class GeeCaptchaAction extends Action
      * @param array $postdata
      * @return mixed|string
      */
-    private function post_request($url, $postdata = '') {
+    private function post_request($url, $postdata = '')
+    {
         if (!$postdata) {
             return false;
         }
@@ -273,16 +306,16 @@ class GeeCaptchaAction extends Action
             curl_close($ch);
         } else {
             if ($postdata) {
-                $opts    = array(
+                $opts = array(
                     'http' => array(
-                        'method'  => 'POST',
-                        'header'  => "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($data) . "\r\n",
+                        'method' => 'POST',
+                        'header' => "Content-type: application/x-www-form-urlencoded\r\n" . "Content-Length: " . strlen($data) . "\r\n",
                         'content' => $data,
                         'timeout' => self::$connectTimeout + self::$socketTimeout
                     )
                 );
                 $context = stream_context_create($opts);
-                $data    = file_get_contents($url, false, $context);
+                $data = file_get_contents($url, false, $context);
             }
         }
 
@@ -290,15 +323,13 @@ class GeeCaptchaAction extends Action
     }
 
 
-
     /**
      * @param $err
      */
-    private function triggerError($err) {
+    private function triggerError($err)
+    {
         trigger_error($err);
     }
-
-
 
 
 }
