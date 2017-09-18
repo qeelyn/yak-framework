@@ -41,7 +41,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      */
     public function getId()
     {
-        return $this->attributes['id'];
+        return $this->attributes['id'] ?? null;
     }
 
     /**
@@ -49,7 +49,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      */
     public function getAuthKey()
     {
-        return $this->attributes['auth_key'];
+        return $this->attributes['auth_key'] ?? null;
     }
 
     /**
@@ -85,7 +85,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      */
     public function getRoles()
     {
-        return $this->attributes['roles'];
+        return $this->attributes['roles'] ?? [];
     }
 
     //below is implement method as array
