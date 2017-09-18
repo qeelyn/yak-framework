@@ -40,7 +40,7 @@ class GeeCaptchaValidator extends Validator
     protected function validateValue($value)
     {
         $captcha = $this->createCaptchaAction();
-        $valid = !is_array($value) && $captcha->validate($value);
+        $valid = $captcha->validate($value);
 
         return $valid ? null : [$this->message, []];
     }

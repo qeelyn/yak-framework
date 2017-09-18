@@ -80,7 +80,7 @@ class GeeCaptchaAction extends Action
     }
 
     /**
-     * @param $value
+     * @param array|null $value 该参数目前不需要用到,验证值通过请求参数获得
      * @return bool
      */
     public function validate($value)
