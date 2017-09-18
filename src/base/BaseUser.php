@@ -81,12 +81,19 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
 
     /**
      * 获取用户角色
+     * @deprecated use getAssignments
      * @return string[]
      */
     public function getRoles()
     {
         return $this->attributes['roles'] ?? [];
     }
+
+    public function getAssignments()
+    {
+        return $this->attributes['assignments'] ?? [];
+    }
+
 
     //below is implement method as array
     public function getAttributes()
