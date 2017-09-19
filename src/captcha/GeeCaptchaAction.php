@@ -43,6 +43,10 @@ class GeeCaptchaAction extends Action
      * ```
      */
     public $parseRequestParams;
+    /**
+     * @var boolean if set true,the validate result always return true
+     */
+    public $debug;
 
     public function run()
     {
@@ -55,8 +59,7 @@ class GeeCaptchaAction extends Action
         ];
         $result = $this->preProcess($params);
         if ($result['success']) {
-            //TODO API Server must use cache
-            Yii::$app->session->set('gt_server', $result['success']);
+            Yii::$app->cache->set('gt_server', $result['success']);
         }
         return $result;
     }
@@ -85,6 +88,9 @@ class GeeCaptchaAction extends Action
      */
     public function validate($value)
     {
+        if($this->debug){
+            return true;
+        }
         $rq = $this->parseRequest();
         $userId = Yii::$app->user->getId();
         $params = [
@@ -92,7 +98,7 @@ class GeeCaptchaAction extends Action
             'client_type' => $rq['client_type'],
             'ip_address' => Yii::$app->request->getUserIP(),
         ];
-        if (Yii::$app->session->get('gt_server') == 1) {
+        if (Yii::$app->cache->get('gt_server') == 1) {
             //服务器正常
             $result = $this->successValidate($rq['geetest_challenge'], $rq['geetest_validate'], $rq['geetest_seccode'], $params);
 
