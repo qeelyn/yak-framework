@@ -19,36 +19,38 @@ class GraphqlHelper
 
     /**
      * @param Query $query
-     * @param $conditions
+     * @param array $pagination
+     * @param Connection $db
      * @return array
      * @throws \Exception
      */
-    public static function getPagingResult($query, $conditions)
+    public static function getPagingResult(Query $query,array $pagination,$db = null)
     {
         $limit = 10;
-        if (!(isset($conditions['after']) || isset($conditions['before']))) {
+        if (!(isset($pagination['after']) || isset($pagination['before']))) {
             throw new \Exception('参数错误');
-        } elseif (isset($conditions['after'])) {
+        } elseif (isset($pagination['after'])) {
             $isAfterCursor = true;
-            $cursor = $conditions['after'];
-            $limit = $conditions['first'];
-        } elseif (isset($conditions['before'])) {
-            $cursor = $conditions['before'];
+            $cursor = $pagination['after'];
+            $limit = $pagination['first'];
+        } elseif (isset($pagination['before'])) {
+            $cursor = $pagination['before'];
             $isAfterCursor = false;
-            $limit = $conditions['last'];
+            $limit = $pagination['last'];
         }
 
         $count = intval($query->count());
-        $result = $query->offset(new CursorBasedExpression($cursor, $isAfterCursor))
+        $rows = $query->offset(new CursorBasedExpression($cursor, $isAfterCursor))
             ->limit($limit)
-            ->all();
+            ->createCommand($db)
+            ->queryAll();
 
-        if (count($result)) {
+        if (count($rows)) {
             if (!$isAfterCursor) {
-                $result = array_reverse($result);
+                $rows = array_reverse($rows);
             }
-            $end = $result[count($result) - 1];
-            $start = $result[0];
+            $end = $rows[count($rows) - 1];
+            $start = $rows[0];
         } else {
             $end = 0;
             $start = 0;
@@ -61,16 +63,17 @@ class GraphqlHelper
         if ($cursor > 1) {
             $hasPreviousPage = true;
         }
-        return [
+        $result = [
             'pageInfo' => [
                 'endCursor' => $end['cursor_row_number'],
                 'hasNextPage' => $hasNextPage,
                 'hasPreviousPage' => $hasPreviousPage,
                 'startCursor' => $start['cursor_row_number'],
             ],
-            'nodes' => $result,
+            'nodes' => $query->populate($rows),
             'count' => $count,
         ];
+        return $result;
     }
 
     /**
