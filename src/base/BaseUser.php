@@ -9,16 +9,17 @@
 namespace yak\framework\base;
 
 
-
 use ArrayAccess;
-use Yii;
+use yii\helpers\ArrayHelper;
+use yii\rbac\Assignment;
 use yii\web\IdentityInterface;
 
 /**
  * 用户抽象类,站点应用还需要继承实现IdentityInterface方法
  *
+ *
  * @property array $organizations 顶级组织信息,一个用户可能属于多个顶级组织
- * @property array $currentOrganization 当前顶级组织信息,当用户发生组织切换时,需要变更
+ * @property array $assignments default键表示用户的所有角色,组织ID键包含了特定组织下的角色及未分配组织的角色.
  * @property array $departOrganization 部门级别组织信息
  * @package yak\platform\components
  */
@@ -29,9 +30,12 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      * @param $config
      * @param $data
      */
-    public function __construct($config = [],$data = [])
+    public function __construct($config = [], $data = [])
     {
         $this->attributes = $data;
+        if(isset($data['assignments'])){
+            $this->attributes['assignments'] = self::setAssignments($data['assignments']);
+        }
     }
 
     protected $attributes = [];
@@ -62,7 +66,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     }
 
     /**
-     * 获取当前组织id;
+     * 获取用户的参与的组织;
      * @return mixed
      */
     public function getOrganizations()
@@ -71,27 +75,41 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     }
 
     /**
-     * 获取当前组织id;
-     * @return mixed
+     * 获取用户角色,如果不指定组织,则为用户的所有角色
+     * @param int $organizationId 指定组织的角色
+     * @return array
      */
-    public function getCurrentOrganization()
+    public function getAssignments($organizationId = 0)
     {
-        return $this->attributes['currentOrganization'] ?? [];
+        if ($organizationId && ($this->attributes['assignments'][$organizationId]??false)) {
+            return $this->attributes['assignments'][$organizationId];
+        }
+        return $this->attributes['assignments']['default'] ?? [];
     }
 
     /**
-     * 获取用户角色
-     * @deprecated use getAssignments
-     * @return string[]
+     * 将assignments数组转化为按组织id为key的数组
+     * @param array $assignments 包含
+     * @return array
      */
-    public function getRoles()
+    public static function setAssignments($assignments)
     {
-        return $this->attributes['roles'] ?? [];
-    }
-
-    public function getAssignments()
-    {
-        return $this->attributes['assignments'] ?? [];
+        $result = [];
+        $orgIds = array_unique(array_filter(ArrayHelper::getColumn($assignments,'organization_id')));
+        foreach ($assignments as $item){
+            if($item['organization_id'] ?? false){
+                $result[$item['organization_id']][] = $item;
+                $result['default'][] = $item;
+            } else {
+                if($orgIds){
+                    foreach ($orgIds as $orgId){
+                        $result[$orgId][] = $item;
+                    }
+                }
+                $result['default'][] = $item;
+            }
+        }
+        return $result;
     }
 
 

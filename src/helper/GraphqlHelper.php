@@ -10,6 +10,7 @@ namespace yak\framework\helper;
 
 use Yii;
 
+use yii\base\InvalidParamException;
 use yii\db\CursorBasedExpression;
 use yii\db\Query;
 
@@ -104,9 +105,11 @@ class GraphqlHelper
     /**
      *  gid 进行 解码
      * @param $globalId
+     * @param string $code validate the global id code
+     * @throws InvalidParamException
      * @return array|null
      */
-    public static function decodeGlobalId($globalId)
+    public static function decodeGlobalId($globalId,$code = '')
     {
         if (empty($globalId)) {
             return [
@@ -115,6 +118,9 @@ class GraphqlHelper
             ];
         } else {
             $decode = explode(':', base64_decode($globalId));
+            if($code && $decode[0] != $code){
+                throw new InvalidParamException('incorrect id');
+            }
             return [
                 'code' => $decode[0],
                 'id' => $decode[1],
