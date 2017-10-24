@@ -10,6 +10,7 @@ namespace yak\framework\filters;
 
 use Yii;
 use yii\base\Action;
+use yii\base\Application;
 use yii\filters\AccessRule;
 
 
@@ -45,7 +46,8 @@ class RbacAccessControl extends \yii\filters\AccessControl
             if (Yii::$app->user->isGuest) {
                 return false;
             }
-            $name = '/' . $action->controller->uniqueId;
+            $moduleId = $action->controller->module instanceof Application ? '' : $action->controller->module->id;
+            $name = $moduleId . '.' . $action->controller->id . '.' . $action->id;
             return Yii::$app->getAuthManager()->checkAccess(Yii::$app->user->id, $name, Yii::$app->requestedParams);
         };
         return [
