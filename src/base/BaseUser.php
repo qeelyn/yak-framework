@@ -33,7 +33,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     public function __construct($config = [], $data = [])
     {
         $this->attributes = $data;
-        if(isset($data['assignments'])){
+        if(isset($data['assignments']) && !isset($data['assignments']['default'])){
             $this->attributes['assignments'] = self::setAssignments($data['assignments']);
         }
     }
