@@ -10,6 +10,7 @@ namespace yak\framework\base;
 
 
 use ArrayAccess;
+use yii\base\InvalidParamException;
 use yii\helpers\ArrayHelper;
 use yii\rbac\Assignment;
 use yii\web\IdentityInterface;
@@ -67,15 +68,24 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
 
     /**
      * 获取当前作业的组织ID
+     * @param bool $throwException 是否抛出异常
      * @return array|int|mixed
      */
-    public function getCurrentOrganizationId()
+    public function getCurrentOrganizationId($throwException = true)
     {
-        $id = \Yii::$app->request->get('token_oid') ?? \Yii::$app->request->post('token_oid',0);
-        if(!$id && \Yii::$app->user->enableSession){
-            $org = \Yii::$app->session->get('currentOrganizationId');
-            return $org['id'] ?? 0;
+        $id = isset($this->attributes['currentOrganizationId']) ? $this->attributes['currentOrganizationId'] : null;
+        if($id == null){
+            $id = \Yii::$app->request->get('token_oid') ?? \Yii::$app->request->post('token_oid',0);
+            if(!$id){
+                if(\Yii::$app->user->enableSession){
+                    $id = \Yii::$app->session->get('currentOrganizationId');
+                }elseif($throwException){
+                    throw new InvalidParamException('miss or empty params: token_oid');
+                }
+            }
+            $this->attributes['currentOrganizationId'] = $id;
         }
+
         return $id;
     }
 
