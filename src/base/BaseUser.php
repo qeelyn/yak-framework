@@ -66,6 +66,20 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     }
 
     /**
+     * 获取当前作业的组织ID
+     * @return array|int|mixed
+     */
+    public function getCurrentOrganizationId()
+    {
+        $id = \Yii::$app->request->get('token_oid') ?? \Yii::$app->request->post('token_oid',0);
+        if(!$id && \Yii::$app->user->enableSession){
+            $org = \Yii::$app->session->get('currentOrganizationId');
+            return $org['id'] ?? 0;
+        }
+        return $id;
+    }
+
+    /**
      * 获取用户的参与的组织;
      * @return mixed
      */
