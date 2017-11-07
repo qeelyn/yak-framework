@@ -46,7 +46,7 @@ class RbacAccessControl extends \yii\filters\AccessControl
             if (Yii::$app->user->isGuest) {
                 return false;
             }
-            $name = '/' . $action->controller->uniqueId;
+            $name = '/' . $action->uniqueId;
             return Yii::$app->getAuthManager()->checkAccess(Yii::$app->user->id, $name, Yii::$app->requestedParams);
         };
         return [
