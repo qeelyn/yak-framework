@@ -122,7 +122,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
         $orgIds = array_unique(array_filter(ArrayHelper::getColumn($assignments,'organization_id')));
         foreach ($assignments as $key=>$item){
             if($item['organization_id'] ?? false){
-                $result[$item['organization_id']][] = $item;
+                $result[$item['organization_id']][$key] = $item;
                 $result['default'][$key] = $item;
             } else {
                 if($orgIds){
