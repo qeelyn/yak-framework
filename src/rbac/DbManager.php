@@ -553,7 +553,7 @@ class DbManager extends \yii\rbac\DbManager
             throw new InvalidCallException("Cannot add '{$child->name}' as a child of '{$parent->name}'. A loop has been detected.");
         }
         $parentKey = $this->convertNameToId($parent->name);
-        $childKey = $this->convertNameToId($parent->name);
+        $childKey = $this->convertNameToId($child->name);
         $now = time();
         $data = [
             'parent_type' => $parentKey[0],
@@ -577,7 +577,7 @@ class DbManager extends \yii\rbac\DbManager
     public function removeChild($parent, $child)
     {
         $parentKey = $this->convertNameToId($parent->name);
-        $childKey = $this->convertNameToId($parent->name);
+        $childKey = $this->convertNameToId($child->name);
 
         $result = $this->db->createCommand()
                 ->delete($this->itemChildTable, [
@@ -608,7 +608,7 @@ class DbManager extends \yii\rbac\DbManager
     public function hasChild($parent, $child)
     {
         $parentKey = $this->convertNameToId($parent->name);
-        $childKey = $this->convertNameToId($parent->name);
+        $childKey = $this->convertNameToId($child->name);
         return (new Query())
                 ->from($this->itemChildTable)
                 ->where([
