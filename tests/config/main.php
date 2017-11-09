@@ -49,6 +49,7 @@ $config = [
             'format' => Response::FORMAT_HTML,
         ],
         'user' => [
+            'identityClass' => 'yakunit\framework\ContextUser',
             'enableAutoLogin' => true,//if web you can set true,api must set false
         ],
         'log' => [
