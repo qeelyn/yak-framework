@@ -91,7 +91,7 @@ class DbManager extends \yii\rbac\DbManager
     protected function checkAccessRecursive($user, $itemName, $params, $assignments)
     {
         if (($item = $this->getItem($itemName)) === null) {
-            return false;
+            return true;
         }
 
         Yii::trace($item instanceof Role ? "Checking role: $itemName" : "Checking permission: $itemName", __METHOD__);
