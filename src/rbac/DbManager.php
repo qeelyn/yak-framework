@@ -582,7 +582,7 @@ class DbManager extends \yii\rbac\DbManager
         $result = $this->db->createCommand()
                 ->delete($this->itemChildTable, [
                     'parent_type' => $parentKey[0],
-                    'parent_id' => $parent[1],
+                    'parent_id' => $parentKey[1],
                     'child_type' => $childKey[0],
                     'child_id' => $childKey[1],
                 ])
