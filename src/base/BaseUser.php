@@ -119,10 +119,10 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     public static function setAssignments($assignments)
     {
         $result = [];
-        $orgIds = array_unique(array_filter(ArrayHelper::getColumn($assignments,'organization_id')));
+        $orgIds = array_unique(array_filter(ArrayHelper::getColumn($assignments,'organizationId')));
         foreach ($assignments as $key=>$item){
-            if($item['organization_id'] ?? false){
-                $result[$item['organization_id']][$key] = $item;
+            if($item->organizationId ?? false){
+                $result[$item->organizationId][$key] = $item;
                 $result['default'][$key] = $item;
             } else {
                 if($orgIds){

@@ -237,7 +237,14 @@ class DbManager extends \yii\rbac\DbManager
         if (isset($row['data'])) {
             $data = json_decode($row['data']);
         }
-
+        $data['name'] = $row['name'] ?? null;
+        $data['kind'] = $row['kind'] ?? null;
+        $data['app_id'] = $row['app_id'] ?? null;
+        $data['status'] = $row['status'] ?? null;
+        $data['display_sort'] = $row['display_sort'] ?? null;
+        $data['is_grant_user'] = $row['is_grant_user'] ?? null;
+        $data['organization_id'] = $row['organization_id'] ?? null;
+        $data['data'] = $row['data'] ?? null;
         return new $class([
             'name' => $row['type'] . $row['id'],
             'type' => $row['type'],
@@ -298,7 +305,7 @@ class DbManager extends \yii\rbac\DbManager
                 $where['organization_id'] = $organizationId;
             }
             $query = (new Query())
-                ->select('user_id,item_id,item_type,organization_id')
+                ->select('user_id,item_id,item_type,organization_id,created_at')
                 ->where($where)
                 ->from($this->assignmentTable);
 
@@ -322,32 +329,6 @@ class DbManager extends \yii\rbac\DbManager
     protected function addItem($item)
     {
         $time = time();
-        if ($data = $item->data) {
-            if ($data['app_id'] ?? false) {
-                $appId = $data['app_id'];
-                unset($data['app_id']);
-            }
-            if ($data['organization_id'] ?? false) {
-                $organization_id = $data['organization_id'];
-                unset($data['organization_id']);
-            }
-            if ($data['status'] ?? false) {
-                $status = $data['status'];
-                unset($data['status']);
-            }
-            if ($data['is_grant_user'] ?? false) {
-                $is_grant_user = $data['is_grant_user'];
-                unset($data['is_grant_user']);
-            }
-            if ($data['display_sort'] ?? false) {
-                $display_sort = $data['display_sort'];
-                unset($data['display_sort']);
-            }
-            if ($data['kind'] ?? false) {
-                $kind = $data['kind'];
-                unset($data['kind']);
-            }
-        }
 
         if ($item->createdAt === null) {
             $item->createdAt = $time;
@@ -357,13 +338,13 @@ class DbManager extends \yii\rbac\DbManager
         }
 
         $columns = [
-            'app_id' => $appId ?? 0,
+            'app_id' => $item->data['app_id'] ?? null,
             'name' => $item->name,
-            'kind' => $kind ?? 0,
+            'kind' => $item->data['kind'] ?? 1,
             'description' => $item->description,
             'rule_id' => $item->ruleName,
-            'status' => $status ?? 0,
-            'data' => $item->data === null ? null : json_encode($data),
+            'status' => $item->data['status'] ?? 0,
+            'data' => json_encode($item->data['data']),
             'created_at' => $item->createdAt,
             'created_by' => Yii::$app->user->id,
             'updated_at' => $item->updatedAt,
@@ -373,10 +354,10 @@ class DbManager extends \yii\rbac\DbManager
             $table = $this->itemTable;
         } else {
             $table = $this->roleItemTable;
-            $columns['kind'] = $kind ?? 3;
-            $columns['display_sort'] = $display_sort ?? 0;
-            $columns['is_grant_user'] = $is_grant_user ?? 0;
-            $columns['organization_id'] = $organization_id ?? null;
+            $columns['kind'] = $columns['kind'] ?? 3;
+            $columns['display_sort'] = $item->data['display_sort'] ?? 0;
+            $columns['is_grant_user'] = $item->data['is_grant_user'] ?? 0;
+            $columns['organization_id'] = $item->data['organization_id'] ?? 0;;
         }
 
         $this->db->createCommand()
@@ -515,7 +496,7 @@ class DbManager extends \yii\rbac\DbManager
             ->from(['a' => $this->assignmentTable, 'b' => $this->itemTable])
             ->where('{{a}}.[[item_id]]={{b}}.[[id]]')
             ->andWhere(['a.user_id' => (string)$userId])
-            ->andWhere(['b.item_type' => self::ITEM_PERMISSION]);
+            ->andWhere(['a.item_type' => self::ITEM_PERMISSION]);
 
         $permissions = [];
         foreach ($query->all($this->db) as $row) {
@@ -701,11 +682,11 @@ class DbManager extends \yii\rbac\DbManager
         $key = $this->convertNameToId($role->name);
         return $this->db->createCommand()
                 ->delete($this->assignmentTable, [
-                    'user_id' => (string) $userId,
-                    'item_type' => $key[0],
-                    'item_id' => $key[1],
-                    'organization_od' => $orgId,
-                        ]
+                        'user_id' => (string) $userId,
+                        'item_type' => $key[0],
+                        'item_id' => $key[1],
+                        'organization_od' => $orgId,
+                    ]
                 )->execute() > 0;
     }
 
@@ -766,7 +747,7 @@ class DbManager extends \yii\rbac\DbManager
      * @param bool $refresh
      * @return array
      */
-    public function getMenuTreeByPermission($appCode, $userId,$refresh = false)
+    public function getAssignedMenu($appCode, $userId,$refresh = false)
     {
         if (!$userId) {
             return [];
@@ -778,7 +759,7 @@ class DbManager extends \yii\rbac\DbManager
                 ->select('a.*')
                 ->where(['b.code' => $appCode,'a.app_id'=>new Expression('[[b.id]]')])
                 ->orderBy('a.display_sort')
-                ->indexBy('a.id')
+                ->indexBy('id')
                 ->all($this->db);
             if($userId !== null){
                 foreach ($this->getPermissionsByUser($userId) as $name=>$value){
