@@ -685,7 +685,7 @@ class DbManager extends \yii\rbac\DbManager
                         'user_id' => (string) $userId,
                         'item_type' => $key[0],
                         'item_id' => $key[1],
-                        'organization_od' => $orgId,
+                        'organization_id' => $orgId,
                     ]
                 )->execute() > 0;
     }
