@@ -776,6 +776,9 @@ class DbManager extends \yii\rbac\DbManager
                     }
                 }
             }
+            if(empty($routes)){
+                return [];
+            }
             $routes = array_unique($routes);
             sort($routes);
 
