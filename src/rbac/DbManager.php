@@ -873,7 +873,7 @@ class DbManager extends \yii\rbac\DbManager
             $where = ['name' => $names];
         }
         $query = (new Query())->from(['a'=>'auth_permission_group','b' => 'auth_app'])
-            ->where('a.app_id = b.id')
+            ->where(['a.app_id'=>new Expression('b.id'),'b.code'=>$appCode])
             ->andWhere($where)
             ->indexBy('id')
         ;
