@@ -868,9 +868,9 @@ class DbManager extends \yii\rbac\DbManager
     public function getPermissionGroups($appCode,$names, $byId = false)
     {
         if ($byId) {
-            $where = ['id' => $names];
+            $where = ['a.id' => $names];
         } else {
-            $where = ['name' => $names];
+            $where = ['a.name' => $names];
         }
         $query = (new Query())->from(['a'=>'auth_permission_group','b' => 'auth_app'])
             ->where(['a.app_id'=>new Expression('b.id'),'b.code'=>$appCode])
