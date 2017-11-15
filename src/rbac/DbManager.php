@@ -858,4 +858,25 @@ class DbManager extends \yii\rbac\DbManager
             ->andWhere(['a.user_id' => $userId]);
         return $query->all($this->db);
     }
+
+    /**
+     * @param array $names
+     * @param string $appCode
+     * @param bool $byId
+     * @return array
+     */
+    public function getPermissionGroups($appCode,$names, $byId = false)
+    {
+        if ($byId) {
+            $where = ['id' => $names];
+        } else {
+            $where = ['name' => $names];
+        }
+        $query = (new Query())->from(['a'=>'auth_permission_group','b' => 'auth_app'])
+            ->where('a.app_id = b.id')
+            ->andWhere($where)
+            ->indexBy('id')
+        ;
+        return $query->all($this->db);
+    }
 }
