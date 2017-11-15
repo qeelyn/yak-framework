@@ -23,7 +23,7 @@ class UserHelper
     {
         $key = ['user_', $userId];
         if (!($data = \Yii::$app->cache->get($key))) {
-            $data = (new Query())->from('opm_user')->where('id=' . $key)->one(\Yii::$app->db);
+            $data = (new Query())->from('opm_user')->where('id=' . $userId)->one(\Yii::$app->db);
             \Yii::$app->cache->set($key, $data, 3600, new TagDependency([
                 'tags' => __CLASS__
             ]));
