@@ -865,19 +865,22 @@ class DbManager extends \yii\rbac\DbManager
      * @param bool $byId
      * @return array
      */
-    public function getPermissionGroups($appCode,$names, $byId = false)
+    public function getPermissionGroups($appCode,$names = [], $byId = false)
     {
-        if ($byId) {
-            $where = ['a.id' => $names];
-        } else {
-            $where = ['a.name' => $names];
-        }
         $query = (new Query())->from(['a'=>'auth_permission_group','b' => 'auth_app'])
             ->select('a.*')
             ->where(['a.app_id'=>new Expression('b.id'),'b.code'=>$appCode])
-            ->andWhere($where)
             ->indexBy('id')
         ;
+        if(!$names){
+            if ($byId) {
+                $where = ['a.id' => $names];
+            } else {
+                $where = ['a.name' => $names];
+            }
+            $query->andWhere($where);
+        }
+
         return $query->all($this->db);
     }
 }
