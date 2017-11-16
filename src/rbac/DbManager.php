@@ -872,7 +872,7 @@ class DbManager extends \yii\rbac\DbManager
             ->where(['a.app_id'=>new Expression('b.id'),'b.code'=>$appCode])
             ->indexBy('id')
         ;
-        if(!$names){
+        if($names){
             if ($byId) {
                 $where = ['a.id' => $names];
             } else {
