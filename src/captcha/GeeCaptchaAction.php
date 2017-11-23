@@ -88,9 +88,6 @@ class GeeCaptchaAction extends Action
      */
     public function validate($value)
     {
-        if($this->debug){
-            return true;
-        }
         $rq = $this->parseRequest();
         $userId = Yii::$app->user->getId();
         $params = [
