@@ -13,7 +13,6 @@ use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
 use yii\caching\CacheInterface;
-use yii\caching\TagDependency;
 use yii\db\Expression;
 use yii\db\Query;
 use yii\rbac\Item;
@@ -58,7 +57,6 @@ class DbManager extends \yii\rbac\DbManager
             $this->rules = null;
             $this->parents = null;
             $this->nameMappers = null;
-            TagDependency::invalidate($this->cache, $this->cacheKey);
         }
     }
 
@@ -747,62 +745,54 @@ class DbManager extends \yii\rbac\DbManager
      * @param bool $refresh
      * @return array
      */
-    public function getAssignedMenu($appCode, $userId,$refresh = false)
+    public function getAssignedMenu($appCode, $userId)
     {
         if (!$userId) {
             return [];
         }
-        $key = [__METHOD__,$appCode,$userId];
-
-        if($refresh || ($result = Yii::$app->cache->get($key)) === false){
-            $menu = (new Query())->from(['a'=>'auth_menu','b'=>'auth_app'])
-                ->select('a.*')
-                ->where(['b.code' => $appCode,'a.app_id'=>new Expression('[[b.id]]')])
-                ->orderBy('a.display_sort')
-                ->indexBy('id')
-                ->all($this->db);
-            if($userId !== null){
-                foreach ($this->getPermissionsByUser($userId) as $name=>$value){
-                    if ($name[0] === '/') {
-                        $routes[] = $name;
-                    }
+        $menu = (new Query())->from(['a'=>'auth_menu','b'=>'auth_app'])
+            ->select('a.*')
+            ->where(['b.code' => $appCode,'a.app_id'=>new Expression('[[b.id]]')])
+            ->orderBy('a.display_sort')
+            ->indexBy('id')
+            ->all($this->db);
+        if($userId !== null){
+            foreach ($this->getPermissionsByUser($userId) as $name=>$value){
+                if ($name[0] === '/') {
+                    $routes[] = $name;
                 }
             }
-
-            foreach ($this->defaultRoles as $role) {
-                foreach ($this->getPermissionsByRole($role) as $name => $value) {
-                    if ($name[0] === '/') {
-                        $routes[] = $name;
-                    }
-                }
-            }
-            if(empty($routes)){
-                return [];
-            }
-            $routes = array_unique($routes);
-            sort($routes);
-
-            $filter = function ($menu) use ($routes) {
-                if ($menu['route'] && in_array($menu['route'],$routes)) {
-                    return true;
-                } elseif ($menu['route']) {
-                    foreach ($routes as $route){
-                        if (substr($route, -2) === '/*' && fnmatch($route,$menu['route'])) {
-                            return true;
-                        }
-                    }
-                    return false;
-                } else {
-                    return true;
-                }
-            };
-            $result = self::buildMenuTree($menu, $filter);
-            self::clearMenuTree($result);
-            Yii::$app->cache->set($key,$result,0,new TagDependency([
-                'tags'=>$this->cacheKey,
-            ]));
-
         }
+
+        foreach ($this->defaultRoles as $role) {
+            foreach ($this->getPermissionsByRole($role) as $name => $value) {
+                if ($name[0] === '/') {
+                    $routes[] = $name;
+                }
+            }
+        }
+        if(empty($routes)){
+            return [];
+        }
+        $routes = array_unique($routes);
+        sort($routes);
+
+        $filter = function ($menu) use ($routes) {
+            if ($menu['route'] && in_array($menu['route'],$routes)) {
+                return true;
+            } elseif ($menu['route']) {
+                foreach ($routes as $route){
+                    if (substr($route, -2) === '/*' && fnmatch($route,$menu['route'])) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $result = self::buildMenuTree($menu, $filter);
+        self::clearMenuTree($result);
         return $result;
     }
 
