@@ -141,7 +141,7 @@ class DbManager extends \yii\rbac\DbManager
         }
         $key = [__CLASS__, $this->cacheKey, $orgId];
         $data = $this->cache->get($key);
-        if (is_array($data) && isset($data[0], $data[1], $data[2], $data[3], $data[4])) {
+        if (is_array($data) && isset($data[0], $data[1], $data[2], $data[3])) {
             list ($this->items, $this->rules, $this->parents, $this->nameMappers) = $data;
             return;
         }
