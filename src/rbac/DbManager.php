@@ -164,7 +164,7 @@ class DbManager extends \yii\rbac\DbManager
 
         foreach ($query->all() as $row) {
             $row['type'] = self::ITEM_ROLE;
-            $this->items[self::ITEM_ROLE . $row['id']] = $row;
+            $this->items[self::ITEM_ROLE . $row['id']] = $this->populateItem($row);
         }
         //规则
         $query = (new Query())->from($this->ruleTable);
