@@ -13,6 +13,7 @@ use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
 use yii\caching\CacheInterface;
+use yii\caching\TagDependency;
 use yii\db\Expression;
 use yii\db\Query;
 use yii\rbac\Item;
@@ -41,6 +42,8 @@ class DbManager extends \yii\rbac\DbManager
 
     public $roleItemTable = '{{%auth_role}}';
 
+    private $authTag = 'authTag';
+
     public function invalidateCache()
     {
         if ($this->cache !== null) {
@@ -57,7 +60,15 @@ class DbManager extends \yii\rbac\DbManager
             $this->rules = null;
             $this->parents = null;
             $this->nameMappers = null;
+            TagDependency::invalidate(\Yii::$app->cache, __CLASS__ . $this->authTag);
         }
+    }
+
+    public function createAuthTagDependency()
+    {
+        return new TagDependency([
+            'tags' => __CLASS__ . $this->authTag,
+        ]);
     }
 
     /**
