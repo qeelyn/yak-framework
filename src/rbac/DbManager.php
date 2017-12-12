@@ -152,10 +152,10 @@ class DbManager extends \yii\rbac\DbManager
         $this->items = [];
         $this->nameMappers = [];
         foreach ($query->all($this->db) as $row) {
-            $key = self::ITEM_PERMISSION . $row['id'];
+            $permissionKey = self::ITEM_PERMISSION . $row['id'];
             $row['type'] = self::ITEM_PERMISSION;
-            $this->items[$key] = $this->populateItem($row);
-            $this->nameMappers[$row['name']] = $key;
+            $this->items[$permissionKey] = $this->populateItem($row);
+            $this->nameMappers[$row['name']] = $permissionKey;
         }
         //2.role
         //角色数据,name不唯一,以id做为key
