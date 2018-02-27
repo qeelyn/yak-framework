@@ -82,7 +82,7 @@ class DbManager extends \yii\rbac\DbManager
     public function checkAccess($userId, $permissionName, $params = [])
     {
         //YII 2.0.13 AccessRule的变化导致需要处理
-        if($permissionName == '?' || $permissionName == '@' ){
+        if ($permissionName == '?' || $permissionName == '@') {
             return false;
         }
         $assignments = $this->getAssignments($userId, $params['organization_id'] ?? 0);
@@ -94,9 +94,9 @@ class DbManager extends \yii\rbac\DbManager
         $this->loadFromCache();
         if ($this->items !== null) {
             $pKey = $this->nameMappers[$permissionName] ?? null;
-            if($pKey){
+            if ($pKey) {
                 $permissionName = is_string($pKey) ? $pKey : $pKey->name;
-            }else{
+            } else {
                 return true;
             }
             return $this->checkAccessFromCache($userId, $permissionName, $params, $assignments);
@@ -284,7 +284,7 @@ class DbManager extends \yii\rbac\DbManager
             return [$name, $name];
         }
         $type = $name[0];
-        if($type == self::ITEM_PERMISSION || $type == self::ITEM_ROLE){
+        if ($type == self::ITEM_PERMISSION || $type == self::ITEM_ROLE) {
             return [$type, substr($name, 1)];
         }
         return ['', $name];
@@ -802,7 +802,7 @@ class DbManager extends \yii\rbac\DbManager
                 }
             }
         }
-        if (empty($routes)) {
+        if (!isset($routes) || empty($routes)) {
             return [];
         }
         $routes = array_unique($routes);
