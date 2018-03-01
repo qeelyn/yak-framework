@@ -34,7 +34,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     public function __construct($config = [], $data = [])
     {
         $this->attributes = $data;
-        if(isset($data['assignments']) && !isset($data['assignments']['default'])){
+        if (isset($data['assignments']) && !isset($data['assignments']['default'])) {
             $this->attributes['assignments'] = self::setAssignments($data['assignments']);
         }
     }
@@ -73,20 +73,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      */
     public function getCurrentOrganizationId($throwException = true)
     {
-        $id = isset($this->attributes['currentOrganizationId']) ? $this->attributes['currentOrganizationId'] : null;
-        if($id == null){
-            $id = \Yii::$app->request->get('token_oid') ?? \Yii::$app->request->post('token_oid',0);
-            if(!$id){
-                if(\Yii::$app->user->enableSession){
-                    $id = \Yii::$app->session->get('currentOrganizationId');
-                }elseif($throwException){
-                    throw new InvalidParamException('miss or empty params: token_oid');
-                }
-            }
-            $this->attributes['currentOrganizationId'] = $id;
-        }
-
-        return $id;
+        return isset($this->attributes['currentOrganizationId']) ? $this->attributes['currentOrganizationId'] : 0;
     }
 
     /**
@@ -105,7 +92,7 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
      */
     public function getAssignments($organizationId = 0)
     {
-        if ($organizationId && ($this->attributes['assignments'][$organizationId]??false)) {
+        if ($organizationId && ($this->attributes['assignments'][$organizationId] ?? false)) {
             return $this->attributes['assignments'][$organizationId];
         }
         return $this->attributes['assignments']['default'] ?? [];
@@ -119,16 +106,16 @@ abstract class BaseUser implements IdentityInterface, ArrayAccess
     public static function setAssignments($assignments)
     {
         $result = [];
-        $orgIds = array_unique(array_map(function($item){
+        $orgIds = array_unique(array_map(function ($item) {
             return $item->organizationId;
-        },$assignments));
-        foreach ($assignments as $key=>$item){
-            if($item->organizationId ?? false){
+        }, $assignments));
+        foreach ($assignments as $key => $item) {
+            if ($item->organizationId ?? false) {
                 $result[$item->organizationId][$key] = $item;
                 $result['default'][$key] = $item;
             } else {
-                if($orgIds){
-                    foreach ($orgIds as $orgId){
+                if ($orgIds) {
+                    foreach ($orgIds as $orgId) {
                         $result[$orgId][$key] = $item;
                     }
                 }
