@@ -266,6 +266,8 @@ class DbManager extends \yii\rbac\DbManager
         $data['display_sort'] = $row['display_sort'] ?? null;
         $data['is_grant_user'] = $row['is_grant_user'] ?? null;
         $data['organization_id'] = $row['organization_id'] ?? null;
+        $data['kind'] = $row['kind'] ?? null;
+        $data['route'] = $row['route'] ?? null;
         $data['data'] = $row['data'] ?? null;
         return new $class([
             'name' => $row['type'] . $row['id'],
@@ -789,16 +791,17 @@ class DbManager extends \yii\rbac\DbManager
             ->all($this->db);
         if ($userId !== null) {
             foreach ($this->getPermissionsByUser($userId) as $name => $value) {
-                if ($name[0] === '/') {
-                    $routes[] = $name;
+                /** @var $value Permission|Role */
+                if ($value->data['kind'] == 2 && !empty($value->data['route'])) {
+                    $routes[] = $value->data['route'];
                 }
             }
         }
 
         foreach ($this->defaultRoles as $role) {
             foreach ($this->getPermissionsByRole($role) as $name => $value) {
-                if ($name[0] === '/') {
-                    $routes[] = $name;
+                if ($value->data['kind'] == 2 && !empty($value->data['route'])) {
+                    $routes[] = $value->data['route'];
                 }
             }
         }

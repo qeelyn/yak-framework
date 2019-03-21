@@ -127,7 +127,7 @@ class DbManagerTest extends TestCase
 
     function testGetMenuTreeByPermission()
     {
-        $ret = $this->yca->getMenuTreeByPermission('yak.web','1');
+        $ret = $this->yca->getAssignedMenu('yak.web','1');
         $this->assertNotEmpty($ret);
     }
 
