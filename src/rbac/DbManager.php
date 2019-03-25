@@ -785,7 +785,7 @@ class DbManager extends \yii\rbac\DbManager
         }
         $menu = (new Query())->from(['a' => 'auth_menu', 'b' => 'auth_app'])
             ->select('a.*')
-            ->where(['b.code' => $appCode, 'a.app_id' => new Expression('[[b.id]]')])
+            ->where(['a.status'=>1,'b.code' => $appCode, 'a.app_id' => new Expression('[[b.id]]')])
             ->orderBy('a.display_sort')
             ->indexBy('id')
             ->all($this->db);
